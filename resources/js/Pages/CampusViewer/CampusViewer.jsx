@@ -890,21 +890,21 @@ export default function CampusViewer() {
                             ced: "2nd Floor",
                             coa: "1st Floor",
 
-                            gened: "1st Floor",
-                            paso: "1st Floor",
-
-                            guidance: "2nd Floor",
-                            sso: "2nd Floor",
-                            ssc: "2nd Floor",
-                            clinic: "1st Floor",
-
                             registrar: "1st Floor",
                             mis: "1st Floor",
-                            admin: "1st Floor",
-                            supply: "1st Floor",
-                            accounting: "1st Floor",
-                            cashier: "1st Floor",
-                            library: "2nd Floor",
+                            administrative_office: "1st Floor",
+                            supply_office: "1st Floor",
+                            accounting_office: "1st Floor",
+                            cashier_office: "1st Floor",
+                            library_office: "2nd Floor",
+
+                            guidance_office: "2nd Floor",
+                            student_services_office: "2nd Floor",
+                            supreme_student_council: "2nd Floor",
+                            clinic: "1st Floor",
+
+                            gened: "1st Floor",
+                            paso: "1st Floor",
                         };
 
                         const officeRoleLabelMap = {
@@ -976,10 +976,16 @@ export default function CampusViewer() {
                                             n.userData?.buildingName ||
                                             n.userData?.name ||
                                             id;
+                                        const floor =
+                                            officeFloors[childRole] ||
+                                            officeFloors[id] ||
+                                            null;
+
                                         return {
                                             id,
                                             displayName: display,
                                             role: childRole,
+                                            floor,
                                             mesh: n,
                                         };
                                     })
@@ -1017,6 +1023,8 @@ export default function CampusViewer() {
                                             id: officeRole,
                                             displayName: formal,
                                             role: officeRole,
+                                            floor:
+                                                officeFloors[officeRole] || null,
                                             mesh: null,
                                         });
                                     }
@@ -1642,6 +1650,16 @@ export default function CampusViewer() {
                                                                         c.displayName
                                                                     }
                                                                 </div>
+                                                                {c.floor && (
+                                                                    <div
+                                                                        style={{
+                                                                            fontSize: 11,
+                                                                            color: "#555",
+                                                                        }}
+                                                                    >
+                                                                        {c.floor}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                             <button
                                                                 onClick={() =>

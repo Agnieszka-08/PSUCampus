@@ -61,7 +61,7 @@ export default function Welcome({ auth }) {
                                     href="/school/map"
                                     className="px-8 py-3 bg-blue-600 text-white text-lg font-bold rounded shadow hover:bg-blue-700 transition w-full sm:w-auto text-center"
                                 >
-                                    View 3D Map
+                                    View 3D Map test
                                 </Link>
 
                                 {/* Download APK Button */}

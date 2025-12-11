@@ -1591,126 +1591,99 @@ export default function CampusViewer() {
                                                         borderLeft: `3px solid ${PSU_GOLD}`,
                                                     }}
                                                 >
-                                                    {/* Children List */}
-                                                    {p.children &&
-                                                        p.children.length > 0 &&
-                                                        isExpanded && (
+                                                    {p.children.map((c) => (
+                                                        <div
+                                                            key={c.id}
+                                                            style={{
+                                                                display: "flex",
+                                                                alignItems:
+                                                                    "center",
+                                                                justifyContent:
+                                                                    "space-between",
+                                                                padding:
+                                                                    "8px 10px",
+                                                                borderRadius: 6,
+                                                                background:
+                                                                    "#f0f4f8",
+                                                                border: "1px solid #d0d9e8",
+                                                                transition:
+                                                                    "all 0.2s ease",
+                                                            }}
+                                                            onMouseEnter={(
+                                                                e
+                                                            ) => {
+                                                                e.currentTarget.style.background =
+                                                                    PSU_LIGHT_BLUE;
+                                                                e.currentTarget.style.borderColor =
+                                                                    PSU_GOLD;
+                                                            }}
+                                                            onMouseLeave={(
+                                                                e
+                                                            ) => {
+                                                                e.currentTarget.style.background =
+                                                                    "#f0f4f8";
+                                                                e.currentTarget.style.borderColor =
+                                                                    "#d0d9e8";
+                                                            }}
+                                                        >
                                                             <div
                                                                 style={{
-                                                                    marginTop: 8,
-                                                                    marginLeft: 0,
-                                                                    display:
-                                                                        "flex",
-                                                                    flexDirection:
-                                                                        "column",
-                                                                    gap: 6,
-                                                                    paddingLeft: 12,
-                                                                    borderLeft: `3px solid ${PSU_GOLD}`,
+                                                                    flex: 1,
                                                                 }}
                                                             >
-                                                                {p.children.map(
-                                                                    (c) => (
-                                                                        <div
-                                                                            key={
-                                                                                c.id
-                                                                            }
-                                                                            style={{
-                                                                                display:
-                                                                                    "flex",
-                                                                                alignItems:
-                                                                                    "center",
-                                                                                justifyContent:
-                                                                                    "space-between",
-                                                                                padding:
-                                                                                    "8px 10px",
-                                                                                borderRadius: 6,
-                                                                                background:
-                                                                                    "#f0f4f8",
-                                                                                border: "1px solid #d0d9e8",
-                                                                                transition:
-                                                                                    "all 0.2s ease",
-                                                                            }}
-                                                                            onMouseEnter={(
-                                                                                e
-                                                                            ) => {
-                                                                                e.currentTarget.style.background =
-                                                                                    PSU_LIGHT_BLUE;
-                                                                                e.currentTarget.style.borderColor =
-                                                                                    PSU_GOLD;
-                                                                            }}
-                                                                            onMouseLeave={(
-                                                                                e
-                                                                            ) => {
-                                                                                e.currentTarget.style.background =
-                                                                                    "#f0f4f8";
-                                                                                e.currentTarget.style.borderColor =
-                                                                                    "#d0d9e8";
-                                                                            }}
-                                                                        >
-                                                                            <div
-                                                                                style={{
-                                                                                    flex: 1,
-                                                                                }}
-                                                                            >
-                                                                                <div
-                                                                                    style={{
-                                                                                        fontSize: 12,
-                                                                                        color: "#333",
-                                                                                        fontWeight: 500,
-                                                                                    }}
-                                                                                >
-                                                                                    {
-                                                                                        c.displayName
-                                                                                    }
-                                                                                    {c.floor &&
-                                                                                        ` - ${c.floor}`}{" "}
-                                                                                    {/* Display floor here */}
-                                                                                </div>
-                                                                            </div>
-                                                                            <button
-                                                                                onClick={() =>
-                                                                                    handleOpenInfo(
-                                                                                        c
-                                                                                    )
-                                                                                }
-                                                                                style={{
-                                                                                    background:
-                                                                                        PSU_GOLD,
-                                                                                    color: PSU_BLUE,
-                                                                                    border: "none",
-                                                                                    padding:
-                                                                                        "4px 8px",
-                                                                                    borderRadius: 4,
-                                                                                    cursor: "pointer",
-                                                                                    fontSize: 11,
-                                                                                    fontWeight: 600,
-                                                                                    transition:
-                                                                                        "all 0.2s ease",
-                                                                                }}
-                                                                                onMouseEnter={(
-                                                                                    e
-                                                                                ) => {
-                                                                                    e.target.style.background =
-                                                                                        PSU_BLUE;
-                                                                                    e.target.style.color =
-                                                                                        PSU_GOLD;
-                                                                                }}
-                                                                                onMouseLeave={(
-                                                                                    e
-                                                                                ) => {
-                                                                                    e.target.style.background =
-                                                                                        PSU_GOLD;
-                                                                                    e.target.style.color =
-                                                                                        PSU_BLUE;
-                                                                                }}
-                                                                            >
-                                                                                Info
-                                                                            </button>
-                                                                        </div>
-                                                                    )
-                                                                )}
+                                                                <div
+                                                                    style={{
+                                                                        fontSize: 12,
+                                                                        color: "#333",
+                                                                        fontWeight: 500,
+                                                                    }}
+                                                                >
+                                                                    {
+                                                                        c.displayName
+                                                                    }
+                                                                </div>
                                                             </div>
-                                                        )}
+                                                            <button
+                                                                onClick={() =>
+                                                                    handleOpenInfo(
+                                                                        c
+                                                                    )
+                                                                }
+                                                                style={{
+                                                                    background:
+                                                                        PSU_GOLD,
+                                                                    color: PSU_BLUE,
+                                                                    border: "none",
+                                                                    padding:
+                                                                        "4px 8px",
+                                                                    borderRadius: 4,
+                                                                    cursor: "pointer",
+                                                                    fontSize: 11,
+                                                                    fontWeight: 600,
+                                                                    transition:
+                                                                        "all 0.2s ease",
+                                                                }}
+                                                                onMouseEnter={(
+                                                                    e
+                                                                ) => {
+                                                                    e.target.style.background =
+                                                                        PSU_BLUE;
+                                                                    e.target.style.color =
+                                                                        PSU_GOLD;
+                                                                }}
+                                                                onMouseLeave={(
+                                                                    e
+                                                                ) => {
+                                                                    e.target.style.background =
+                                                                        PSU_GOLD;
+                                                                    e.target.style.color =
+                                                                        PSU_BLUE;
+                                                                }}
+                                                            >
+                                                                Info
+                                                            </button>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             )}
                                     </div>

@@ -711,7 +711,7 @@ export default function CampusViewer() {
                         }
                     });
 
-                    // Create pins
+                    // Create one pin per role bucket
                     for (const [role, entry] of roleBuckets.entries()) {
                         const center = entry.bbox.getCenter(
                             new THREE.Vector3()
@@ -760,93 +760,310 @@ export default function CampusViewer() {
 
                     scene.add(pinsGroup);
 
-                    // Office floors mapping
-                    const officeFloors = {
-                        hmo: "1st Floor",
-                        boa: "3rd Floor",
-                        it_dept: "2nd Floor",
-                        ced: "2nd Floor",
-                        coa: "1st Floor",
-
-                        gened: "1st Floor",
-                        paso: "1st Floor",
-
-                        guidance_office: "2nd Floor",
-                        student_services_office: "2nd Floor",
-                        supreme_student_council: "2nd Floor",
-                        clinic: "1st Floor",
-
-                        registrar: "1st Floor",
-                        mis: "1st Floor",
-                        administrative_office: "1st Floor",
-                        supply_office: "1st Floor",
-                        accounting_office: "1st Floor",
-                        cashier_office: "1st Floor",
-                        library_office: "2nd Floor",
-                    };
-
-                    const items = [];
-                    for (const [role, entry] of roleBuckets.entries()) {
-                        const rep = entry.bestNode;
-                        const base = {
-                            id: rep.name || rep.uuid,
-                            role,
-                            displayName:
-                                meshLabelMap[rep.name] ||
-                                rep.userData?.buildingName ||
-                                role,
-                            mesh: rep,
-                            meshes: entry.nodes,
-                            children: [],
+                    try {
+                        const officeLabelOverrides = {
+                            "3DGeom-5559":
+                                "GENERAL EDUCATION DEPARTMENT Office",
+                            "3DGeom-5586":
+                                "PRODUCTION and AUXILIARY SERVICES OFFICE",
                         };
 
-                        const nodeChildren = entry.nodes
-                            .map((n) => {
-                                const id = n.name || n.uuid;
-                                const childRole =
-                                    explicitMeshRoleMap[id] ||
-                                    inferOfficeRoleFromMesh(n, role) ||
-                                    null;
+                        const explicitMeshRoleMap = {};
 
-                                const displayFromRole = childRole
-                                    ? officeRoleLabelMap[childRole]
-                                    : null;
-                                const display =
-                                    displayFromRole ||
-                                    officeLabelOverrides[id] ||
-                                    meshLabelMap[id] ||
-                                    n.userData?.buildingName ||
-                                    n.userData?.name ||
-                                    id;
+                        const inferOfficeRoleFromMesh = (node, parentRole) => {
+                            const s =
+                                (node.name || "") +
+                                " " +
+                                (node.userData?.buildingName || "") +
+                                " " +
+                                (node.userData?.name || "");
+                            const text = String(s).toLowerCase();
 
-                                const floorLabel =
-                                    officeFloors[childRole] || "";
+                            // Academic building offices
+                            if (
+                                text.includes("hmo") ||
+                                text.includes("hospitality") ||
+                                text.includes("management")
+                            )
+                                return "hmo";
+                            if (
+                                text.includes("boa") ||
+                                text.includes("business") ||
+                                text.includes("office administration")
+                            )
+                                return "boa";
+                            if (
+                                text.includes("it") ||
+                                text.includes("information") ||
+                                text.includes("technology")
+                            )
+                                return "it_dept";
+                            if (
+                                text.includes("ced") ||
+                                text.includes("campus executive")
+                            )
+                                return "ced";
+                            if (
+                                text.includes("coa") ||
+                                text.includes("college of agriculture") ||
+                                text.includes("agriculture")
+                            )
+                                return "coa";
 
-                                return {
-                                    id,
-                                    displayName: display,
-                                    role: childRole,
-                                    mesh: n,
-                                    floor: floorLabel,
-                                };
-                            })
-                            .filter(
-                                (c) =>
-                                    c.id !== rep.name &&
-                                    c.displayName &&
-                                    c.displayName !== base.displayName
-                            );
+                            // Administrative building offices
+                            if (text.includes("registrar")) return "registrar";
+                            if (text.includes("mis")) return "mis";
+                            if (
+                                text.includes("administrative") &&
+                                text.includes("office")
+                            )
+                                return "administrative_office";
+                            if (text.includes("supply")) return "supply_office";
+                            if (
+                                text.includes("account") ||
+                                text.includes("accounting")
+                            )
+                                return "accounting_office";
+                            if (text.includes("cashier"))
+                                return "cashier_office";
+                            if (text.includes("library"))
+                                return "library_office";
 
-                        base.children = nodeChildren;
-                        items.push(base);
+                            // SAC offices
+                            if (text.includes("guidance"))
+                                return "guidance_office";
+                            if (
+                                text.includes("student services") ||
+                                text.includes("student_services") ||
+                                text.includes("student service")
+                            )
+                                return "student_services_office";
+                            if (
+                                text.includes("supreme") ||
+                                text.includes("student council") ||
+                                text.includes("ssc")
+                            )
+                                return "supreme_student_council";
+                            if (
+                                text.includes("clinic") ||
+                                text.includes("health")
+                            )
+                                return "clinic";
+
+                            if (parentRole && parentRole !== node.name) {
+                                const cand = (node.name || "")
+                                    .toLowerCase()
+                                    .replace(/[^a-z0-9_]+/g, "_");
+                                if (cand && cand.length > 2) return cand;
+                            }
+
+                            return null;
+                        };
+
+                        const items = [];
+
+                        const explicitOfficeRoles = {
+                            academic: ["hmo", "boa", "it_dept", "ced", "coa"],
+                            administrative: [
+                                "registrar",
+                                "mis",
+                                "administrative_office",
+                                "supply_office",
+                                "accounting_office",
+                                "cashier_office",
+                                "library_office",
+                            ],
+                            sac: [
+                                "guidance_office",
+                                "student_services_office",
+                                "supreme_student_council",
+                                "clinic",
+                            ],
+
+                            arts_science: ["gened", "paso"],
+                        };
+
+                        const officeFloors = {
+                            hmo: "1st Floor",
+                            boa: "3rd Floor",
+                            it_dept: "2nd Floor",
+                            ced: "2nd Floor",
+                            coa: "1st Floor",
+
+                            gened: "1st Floor",
+                            paso: "1st Floor",
+
+                            guidance: "2nd Floor",
+                            sso: "2nd Floor",
+                            ssc: "2nd Floor",
+                            clinic: "1st Floor",
+
+                            registrar: "1st Floor",
+                            mis: "1st Floor",
+                            admin: "1st Floor",
+                            supply: "1st Floor",
+                            accounting: "1st Floor",
+                            cashier: "1st Floor",
+                            library: "2nd Floor",
+                        };
+
+                        const officeRoleLabelMap = {
+                            // Academic
+                            hmo: "Hospitality Management Office",
+                            boa: "Business & Office Administration Department",
+                            it_dept: "Information Technology Department",
+                            ced: "Campus Executive Director Office",
+                            coa: "College of Agriculture",
+
+                            // Administrative
+                            registrar: "Registrar's Office",
+                            mis: "Management Information Systems (MIS)",
+                            administrative_office: "Administrative Office",
+                            supply_office: "Supply Office",
+                            accounting_office: "Accounting Office",
+                            cashier_office: "Cashier",
+                            library_office: "Library",
+
+                            // SAC
+                            guidance_office: "Guidance Office",
+                            student_services_office: "Student Services Office",
+                            supreme_student_council: "Supreme Student Council",
+                            clinic: "Clinic / Health Center",
+
+                            gened: "General Education",
+                            paso: "Production and Auxiliary Services Office",
+                        };
+
+                        for (const [role, entry] of roleBuckets.entries()) {
+                            const rep = entry.bestNode;
+                            const base = {
+                                id: rep.name || rep.uuid,
+                                role,
+                                displayName:
+                                    meshLabelMap[rep.name] ||
+                                    rep.userData?.buildingName ||
+                                    role,
+                                mesh: rep,
+                                meshes: entry.nodes,
+                                children: [],
+                            };
+
+                            if (
+                                [
+                                    "arts_science",
+                                    "academic",
+                                    "administrative",
+                                    "sac",
+                                ].includes(role)
+                            ) {
+                                const repName = rep.name || rep.uuid;
+
+                                const nodeChildren = entry.nodes
+                                    .map((n) => {
+                                        const id = n.name || n.uuid;
+                                        const childRole =
+                                            explicitMeshRoleMap[id] ||
+                                            inferOfficeRoleFromMesh(n, role) ||
+                                            null;
+
+                                        const displayFromRole = childRole
+                                            ? officeRoleLabelMap[childRole]
+                                            : null;
+                                        const display =
+                                            displayFromRole ||
+                                            officeLabelOverrides[id] ||
+                                            meshLabelMap[id] ||
+                                            n.userData?.buildingName ||
+                                            n.userData?.name ||
+                                            id;
+                                        return {
+                                            id,
+                                            displayName: display,
+                                            role: childRole,
+                                            mesh: n,
+                                        };
+                                    })
+                                    .filter(
+                                        (c) =>
+                                            c.id !== repName &&
+                                            c.displayName &&
+                                            c.displayName !== base.displayName
+                                    );
+
+                                const prioritized = [
+                                    ...nodeChildren.filter((c) => c.role),
+                                    ...nodeChildren.filter((c) => !c.role),
+                                ];
+
+                                const children = [...prioritized];
+
+                                const explicit =
+                                    explicitOfficeRoles[role] || [];
+                                for (const officeRole of explicit) {
+                                    const already = children.some(
+                                        (c) =>
+                                            c.role === officeRole ||
+                                            c.id === officeRole
+                                    );
+                                    if (!already) {
+                                        const staticMeta =
+                                            STATIC_BUILDING_INFO[officeRole] ||
+                                            {};
+                                        const formal =
+                                            officeRoleLabelMap[officeRole] ||
+                                            staticMeta?.name ||
+                                            officeRole;
+                                        children.push({
+                                            id: officeRole,
+                                            displayName: formal,
+                                            role: officeRole,
+                                            mesh: null,
+                                        });
+                                    }
+                                }
+
+                                base.children = children;
+                            }
+
+                            items.push(base);
+                        }
+                        setPinnedItems(items);
+                    } catch (e) {
+                        console.warn("Failed to collect pinned items:", e);
                     }
 
-                    setPinnedItems(items);
+                    const req = window.__campus_requestRender;
+                    if (req) req();
                 } catch (e) {
                     console.warn("Failed to create pins:", e);
                 }
 
-                requestRender();
+                // initial focus
+                const initialId = "3DGeom-5597";
+                const foundInit = labelsRef.current.find(
+                    (l) => l.id === initialId
+                );
+                if (foundInit) {
+                    setSelectedGroupId(foundInit.id);
+
+                    try {
+                        const targetPos = foundInit.center.clone();
+                        targetPos.y += foundInit.offsetY || 2;
+                        const radius = foundInit.radius || 5;
+                        const fov = (camera.fov * Math.PI) / 180;
+                        const distance =
+                            Math.abs(radius / Math.sin(fov / 2)) * 1.2;
+                        const dir = new THREE.Vector3(1, 0.6, 1).normalize();
+                        const newCamPos = targetPos
+                            .clone()
+                            .add(dir.multiplyScalar(distance));
+                        camera.position.copy(newCamPos);
+                        controls.target.copy(targetPos);
+                        controls.update();
+                        const req = window.__campus_requestRender;
+                        if (req) req();
+                    } catch (e) {}
+                }
             })
             .catch((err) => {
                 console.error("Error loading model:", err);

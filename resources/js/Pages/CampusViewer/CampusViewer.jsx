@@ -711,7 +711,7 @@ export default function CampusViewer() {
                         }
                     });
 
-                    // Create one pin per role bucket
+                    // Create pins
                     for (const [role, entry] of roleBuckets.entries()) {
                         const center = entry.bbox.getCenter(
                             new THREE.Vector3()
@@ -760,286 +760,93 @@ export default function CampusViewer() {
 
                     scene.add(pinsGroup);
 
-                    try {
-                        const officeLabelOverrides = {
-                            "3DGeom-5559":
-                                "GENERAL EDUCATION DEPARTMENT Office",
-                            "3DGeom-5586":
-                                "PRODUCTION and AUXILIARY SERVICES OFFICE",
-                        };
+                    // Office floors mapping
+                    const officeFloors = {
+                        hmo: "1st Floor",
+                        boa: "3rd Floor",
+                        it_dept: "2nd Floor",
+                        ced: "2nd Floor",
+                        coa: "1st Floor",
 
-                        const explicitMeshRoleMap = {};
+                        gened: "1st Floor",
+                        paso: "1st Floor",
 
-                        const inferOfficeRoleFromMesh = (node, parentRole) => {
-                            const s =
-                                (node.name || "") +
-                                " " +
-                                (node.userData?.buildingName || "") +
-                                " " +
-                                (node.userData?.name || "");
-                            const text = String(s).toLowerCase();
+                        guidance_office: "2nd Floor",
+                        student_services_office: "2nd Floor",
+                        supreme_student_council: "2nd Floor",
+                        clinic: "1st Floor",
 
-                            // Academic building offices
-                            if (
-                                text.includes("hmo") ||
-                                text.includes("hospitality") ||
-                                text.includes("management")
-                            )
-                                return "hmo";
-                            if (
-                                text.includes("boa") ||
-                                text.includes("business") ||
-                                text.includes("office administration")
-                            )
-                                return "boa";
-                            if (
-                                text.includes("it") ||
-                                text.includes("information") ||
-                                text.includes("technology")
-                            )
-                                return "it_dept";
-                            if (
-                                text.includes("ced") ||
-                                text.includes("campus executive")
-                            )
-                                return "ced";
-                            if (
-                                text.includes("coa") ||
-                                text.includes("college of agriculture") ||
-                                text.includes("agriculture")
-                            )
-                                return "coa";
+                        registrar: "1st Floor",
+                        mis: "1st Floor",
+                        administrative_office: "1st Floor",
+                        supply_office: "1st Floor",
+                        accounting_office: "1st Floor",
+                        cashier_office: "1st Floor",
+                        library_office: "2nd Floor",
+                    };
 
-                            // Administrative building offices
-                            if (text.includes("registrar")) return "registrar";
-                            if (text.includes("mis")) return "mis";
-                            if (
-                                text.includes("administrative") &&
-                                text.includes("office")
-                            )
-                                return "administrative_office";
-                            if (text.includes("supply")) return "supply_office";
-                            if (
-                                text.includes("account") ||
-                                text.includes("accounting")
-                            )
-                                return "accounting_office";
-                            if (text.includes("cashier"))
-                                return "cashier_office";
-                            if (text.includes("library"))
-                                return "library_office";
-
-                            // SAC offices
-                            if (text.includes("guidance"))
-                                return "guidance_office";
-                            if (
-                                text.includes("student services") ||
-                                text.includes("student_services") ||
-                                text.includes("student service")
-                            )
-                                return "student_services_office";
-                            if (
-                                text.includes("supreme") ||
-                                text.includes("student council") ||
-                                text.includes("ssc")
-                            )
-                                return "supreme_student_council";
-                            if (
-                                text.includes("clinic") ||
-                                text.includes("health")
-                            )
-                                return "clinic";
-
-                            if (parentRole && parentRole !== node.name) {
-                                const cand = (node.name || "")
-                                    .toLowerCase()
-                                    .replace(/[^a-z0-9_]+/g, "_");
-                                if (cand && cand.length > 2) return cand;
-                            }
-
-                            return null;
-                        };
-
-                        const items = [];
-
-                        const explicitOfficeRoles = {
-                            academic: ["hmo", "boa", "it_dept", "ced", "coa"],
-                            administrative: [
-                                "registrar",
-                                "mis",
-                                "administrative_office",
-                                "supply_office",
-                                "accounting_office",
-                                "cashier_office",
-                                "library_office",
-                            ],
-                            sac: [
-                                "guidance_office",
-                                "student_services_office",
-                                "supreme_student_council",
-                                "clinic",
-                            ],
-
-                            arts_science: ["gened", "paso"],
-                        };
-
-                        const officeRoleLabelMap = {
-                            // Academic
-                            hmo: "Hospitality Management Office",
-                            boa: "Business & Office Administration Department",
-                            it_dept: "Information Technology Department",
-                            ced: "Campus Executive Director Office",
-                            coa: "College of Agriculture",
-
-                            // Administrative
-                            registrar: "Registrar's Office",
-                            mis: "Management Information Systems (MIS)",
-                            administrative_office: "Administrative Office",
-                            supply_office: "Supply Office",
-                            accounting_office: "Accounting Office",
-                            cashier_office: "Cashier",
-                            library_office: "Library",
-
-                            // SAC
-                            guidance_office: "Guidance Office",
-                            student_services_office: "Student Services Office",
-                            supreme_student_council: "Supreme Student Council",
-                            clinic: "Clinic / Health Center",
-
-                            gened: "General Education",
-                            paso: "Production and Auxiliary Services Office",
-                        };
-
-                        for (const [role, entry] of roleBuckets.entries()) {
-                            const rep = entry.bestNode;
-                            const base = {
-                                id: rep.name || rep.uuid,
+                    const items = [];
+                    for (const [role, entry] of roleBuckets.entries()) {
+                        const rep = entry.bestNode;
+                        const base = {
+                            id: rep.name || rep.uuid,
+                            role,
+                            displayName:
+                                meshLabelMap[rep.name] ||
+                                rep.userData?.buildingName ||
                                 role,
-                                displayName:
-                                    meshLabelMap[rep.name] ||
-                                    rep.userData?.buildingName ||
-                                    role,
-                                mesh: rep,
-                                meshes: entry.nodes,
-                                children: [],
-                            };
+                            mesh: rep,
+                            meshes: entry.nodes,
+                            children: [],
+                        };
 
-                            if (
-                                [
-                                    "arts_science",
-                                    "academic",
-                                    "administrative",
-                                    "sac",
-                                ].includes(role)
-                            ) {
-                                const repName = rep.name || rep.uuid;
+                        const nodeChildren = entry.nodes
+                            .map((n) => {
+                                const id = n.name || n.uuid;
+                                const childRole =
+                                    explicitMeshRoleMap[id] ||
+                                    inferOfficeRoleFromMesh(n, role) ||
+                                    null;
 
-                                const nodeChildren = entry.nodes
-                                    .map((n) => {
-                                        const id = n.name || n.uuid;
-                                        const childRole =
-                                            explicitMeshRoleMap[id] ||
-                                            inferOfficeRoleFromMesh(n, role) ||
-                                            null;
+                                const displayFromRole = childRole
+                                    ? officeRoleLabelMap[childRole]
+                                    : null;
+                                const display =
+                                    displayFromRole ||
+                                    officeLabelOverrides[id] ||
+                                    meshLabelMap[id] ||
+                                    n.userData?.buildingName ||
+                                    n.userData?.name ||
+                                    id;
 
-                                        const displayFromRole = childRole
-                                            ? officeRoleLabelMap[childRole]
-                                            : null;
-                                        const display =
-                                            displayFromRole ||
-                                            officeLabelOverrides[id] ||
-                                            meshLabelMap[id] ||
-                                            n.userData?.buildingName ||
-                                            n.userData?.name ||
-                                            id;
-                                        return {
-                                            id,
-                                            displayName: display,
-                                            role: childRole,
-                                            mesh: n,
-                                        };
-                                    })
-                                    .filter(
-                                        (c) =>
-                                            c.id !== repName &&
-                                            c.displayName &&
-                                            c.displayName !== base.displayName
-                                    );
+                                const floorLabel =
+                                    officeFloors[childRole] || "";
 
-                                const prioritized = [
-                                    ...nodeChildren.filter((c) => c.role),
-                                    ...nodeChildren.filter((c) => !c.role),
-                                ];
+                                return {
+                                    id,
+                                    displayName: display,
+                                    role: childRole,
+                                    mesh: n,
+                                    floor: floorLabel,
+                                };
+                            })
+                            .filter(
+                                (c) =>
+                                    c.id !== rep.name &&
+                                    c.displayName &&
+                                    c.displayName !== base.displayName
+                            );
 
-                                const children = [...prioritized];
-
-                                const explicit =
-                                    explicitOfficeRoles[role] || [];
-                                for (const officeRole of explicit) {
-                                    const already = children.some(
-                                        (c) =>
-                                            c.role === officeRole ||
-                                            c.id === officeRole
-                                    );
-                                    if (!already) {
-                                        const staticMeta =
-                                            STATIC_BUILDING_INFO[officeRole] ||
-                                            {};
-                                        const formal =
-                                            officeRoleLabelMap[officeRole] ||
-                                            staticMeta?.name ||
-                                            officeRole;
-                                        children.push({
-                                            id: officeRole,
-                                            displayName: formal,
-                                            role: officeRole,
-                                            mesh: null,
-                                        });
-                                    }
-                                }
-
-                                base.children = children;
-                            }
-
-                            items.push(base);
-                        }
-                        setPinnedItems(items);
-                    } catch (e) {
-                        console.warn("Failed to collect pinned items:", e);
+                        base.children = nodeChildren;
+                        items.push(base);
                     }
 
-                    const req = window.__campus_requestRender;
-                    if (req) req();
+                    setPinnedItems(items);
                 } catch (e) {
                     console.warn("Failed to create pins:", e);
                 }
 
-                // initial focus
-                const initialId = "3DGeom-5597";
-                const foundInit = labelsRef.current.find(
-                    (l) => l.id === initialId
-                );
-                if (foundInit) {
-                    setSelectedGroupId(foundInit.id);
-
-                    try {
-                        const targetPos = foundInit.center.clone();
-                        targetPos.y += foundInit.offsetY || 2;
-                        const radius = foundInit.radius || 5;
-                        const fov = (camera.fov * Math.PI) / 180;
-                        const distance =
-                            Math.abs(radius / Math.sin(fov / 2)) * 1.2;
-                        const dir = new THREE.Vector3(1, 0.6, 1).normalize();
-                        const newCamPos = targetPos
-                            .clone()
-                            .add(dir.multiplyScalar(distance));
-                        camera.position.copy(newCamPos);
-                        controls.target.copy(targetPos);
-                        controls.update();
-                        const req = window.__campus_requestRender;
-                        if (req) req();
-                    } catch (e) {}
-                }
+                requestRender();
             })
             .catch((err) => {
                 console.error("Error loading model:", err);
@@ -1567,99 +1374,126 @@ export default function CampusViewer() {
                                                         borderLeft: `3px solid ${PSU_GOLD}`,
                                                     }}
                                                 >
-                                                    {p.children.map((c) => (
-                                                        <div
-                                                            key={c.id}
-                                                            style={{
-                                                                display: "flex",
-                                                                alignItems:
-                                                                    "center",
-                                                                justifyContent:
-                                                                    "space-between",
-                                                                padding:
-                                                                    "8px 10px",
-                                                                borderRadius: 6,
-                                                                background:
-                                                                    "#f0f4f8",
-                                                                border: "1px solid #d0d9e8",
-                                                                transition:
-                                                                    "all 0.2s ease",
-                                                            }}
-                                                            onMouseEnter={(
-                                                                e
-                                                            ) => {
-                                                                e.currentTarget.style.background =
-                                                                    PSU_LIGHT_BLUE;
-                                                                e.currentTarget.style.borderColor =
-                                                                    PSU_GOLD;
-                                                            }}
-                                                            onMouseLeave={(
-                                                                e
-                                                            ) => {
-                                                                e.currentTarget.style.background =
-                                                                    "#f0f4f8";
-                                                                e.currentTarget.style.borderColor =
-                                                                    "#d0d9e8";
-                                                            }}
-                                                        >
+                                                    {/* Children List */}
+                                                    {p.children &&
+                                                        p.children.length > 0 &&
+                                                        isExpanded && (
                                                             <div
                                                                 style={{
-                                                                    flex: 1,
+                                                                    marginTop: 8,
+                                                                    marginLeft: 0,
+                                                                    display:
+                                                                        "flex",
+                                                                    flexDirection:
+                                                                        "column",
+                                                                    gap: 6,
+                                                                    paddingLeft: 12,
+                                                                    borderLeft: `3px solid ${PSU_GOLD}`,
                                                                 }}
                                                             >
-                                                                <div
-                                                                    style={{
-                                                                        fontSize: 12,
-                                                                        color: "#333",
-                                                                        fontWeight: 500,
-                                                                    }}
-                                                                >
-                                                                    {
-                                                                        c.displayName
-                                                                    }
-                                                                </div>
-                                                            </div>
-                                                            <button
-                                                                onClick={() =>
-                                                                    handleOpenInfo(
-                                                                        c
+                                                                {p.children.map(
+                                                                    (c) => (
+                                                                        <div
+                                                                            key={
+                                                                                c.id
+                                                                            }
+                                                                            style={{
+                                                                                display:
+                                                                                    "flex",
+                                                                                alignItems:
+                                                                                    "center",
+                                                                                justifyContent:
+                                                                                    "space-between",
+                                                                                padding:
+                                                                                    "8px 10px",
+                                                                                borderRadius: 6,
+                                                                                background:
+                                                                                    "#f0f4f8",
+                                                                                border: "1px solid #d0d9e8",
+                                                                                transition:
+                                                                                    "all 0.2s ease",
+                                                                            }}
+                                                                            onMouseEnter={(
+                                                                                e
+                                                                            ) => {
+                                                                                e.currentTarget.style.background =
+                                                                                    PSU_LIGHT_BLUE;
+                                                                                e.currentTarget.style.borderColor =
+                                                                                    PSU_GOLD;
+                                                                            }}
+                                                                            onMouseLeave={(
+                                                                                e
+                                                                            ) => {
+                                                                                e.currentTarget.style.background =
+                                                                                    "#f0f4f8";
+                                                                                e.currentTarget.style.borderColor =
+                                                                                    "#d0d9e8";
+                                                                            }}
+                                                                        >
+                                                                            <div
+                                                                                style={{
+                                                                                    flex: 1,
+                                                                                }}
+                                                                            >
+                                                                                <div
+                                                                                    style={{
+                                                                                        fontSize: 12,
+                                                                                        color: "#333",
+                                                                                        fontWeight: 500,
+                                                                                    }}
+                                                                                >
+                                                                                    {
+                                                                                        c.displayName
+                                                                                    }
+                                                                                    {c.floor &&
+                                                                                        ` - ${c.floor}`}{" "}
+                                                                                    {/* Display floor here */}
+                                                                                </div>
+                                                                            </div>
+                                                                            <button
+                                                                                onClick={() =>
+                                                                                    handleOpenInfo(
+                                                                                        c
+                                                                                    )
+                                                                                }
+                                                                                style={{
+                                                                                    background:
+                                                                                        PSU_GOLD,
+                                                                                    color: PSU_BLUE,
+                                                                                    border: "none",
+                                                                                    padding:
+                                                                                        "4px 8px",
+                                                                                    borderRadius: 4,
+                                                                                    cursor: "pointer",
+                                                                                    fontSize: 11,
+                                                                                    fontWeight: 600,
+                                                                                    transition:
+                                                                                        "all 0.2s ease",
+                                                                                }}
+                                                                                onMouseEnter={(
+                                                                                    e
+                                                                                ) => {
+                                                                                    e.target.style.background =
+                                                                                        PSU_BLUE;
+                                                                                    e.target.style.color =
+                                                                                        PSU_GOLD;
+                                                                                }}
+                                                                                onMouseLeave={(
+                                                                                    e
+                                                                                ) => {
+                                                                                    e.target.style.background =
+                                                                                        PSU_GOLD;
+                                                                                    e.target.style.color =
+                                                                                        PSU_BLUE;
+                                                                                }}
+                                                                            >
+                                                                                Info
+                                                                            </button>
+                                                                        </div>
                                                                     )
-                                                                }
-                                                                style={{
-                                                                    background:
-                                                                        PSU_GOLD,
-                                                                    color: PSU_BLUE,
-                                                                    border: "none",
-                                                                    padding:
-                                                                        "4px 8px",
-                                                                    borderRadius: 4,
-                                                                    cursor: "pointer",
-                                                                    fontSize: 11,
-                                                                    fontWeight: 600,
-                                                                    transition:
-                                                                        "all 0.2s ease",
-                                                                }}
-                                                                onMouseEnter={(
-                                                                    e
-                                                                ) => {
-                                                                    e.target.style.background =
-                                                                        PSU_BLUE;
-                                                                    e.target.style.color =
-                                                                        PSU_GOLD;
-                                                                }}
-                                                                onMouseLeave={(
-                                                                    e
-                                                                ) => {
-                                                                    e.target.style.background =
-                                                                        PSU_GOLD;
-                                                                    e.target.style.color =
-                                                                        PSU_BLUE;
-                                                                }}
-                                                            >
-                                                                Info
-                                                            </button>
-                                                        </div>
-                                                    ))}
+                                                                )}
+                                                            </div>
+                                                        )}
                                                 </div>
                                             )}
                                     </div>

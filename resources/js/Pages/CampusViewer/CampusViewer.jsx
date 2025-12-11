@@ -1646,20 +1646,10 @@ export default function CampusViewer() {
                                                                         fontWeight: 500,
                                                                     }}
                                                                 >
-                                                                    {
-                                                                        c.displayName
-                                                                    }
+                                                                    {c.floor
+                                                                        ? `${c.displayName} - ${c.floor}`
+                                                                        : c.displayName}
                                                                 </div>
-                                                                {c.floor && (
-                                                                    <div
-                                                                        style={{
-                                                                            fontSize: 11,
-                                                                            color: "#555",
-                                                                        }}
-                                                                    >
-                                                                        {c.floor}
-                                                                    </div>
-                                                                )}
                                                             </div>
                                                             <button
                                                                 onClick={() =>

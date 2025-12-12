@@ -67,7 +67,7 @@ export default function InfoPopup({ popupInfo, onClose }) {
                         lineHeight: 1.5,
                     }}
                 >
-                    {info.information}
+                    {info.description}
                 </div>
             )}
 

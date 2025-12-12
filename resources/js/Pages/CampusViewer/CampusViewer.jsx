@@ -233,14 +233,13 @@ export default function CampusViewer() {
 
             setPopupInfo({
                 id: role,
-                name: allInfo.name || groupMeta?.name || role.toUpperCase(),
+                name: allInfo[0]?.name || groupMeta?.name || role.toUpperCase(),
                 description:
-                    allInfo.information ||
+                    allInfo[0]?.information ||
                     groupMeta?.information ||
                     role.toUpperCase(),
                 department: role.toUpperCase(),
 
-                // both combined
                 happenings: allHappenings,
                 services: allServices,
                 achievements: allAchievements,

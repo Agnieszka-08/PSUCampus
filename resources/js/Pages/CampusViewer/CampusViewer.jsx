@@ -235,8 +235,8 @@ export default function CampusViewer() {
                 id: role,
                 name: allInfo.name || groupMeta?.name || role.toUpperCase(),
                 description:
-                    allInfo.description ||
-                    groupMeta?.decription ||
+                    allInfo.information ||
+                    groupMeta?.information ||
                     role.toUpperCase(),
                 department: role.toUpperCase(),
 

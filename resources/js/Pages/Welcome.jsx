@@ -66,7 +66,7 @@ export default function Welcome({ auth }) {
 
                                 {/* Download APK Button */}
                                 <a
-                                    href="/mobileapp/PsuSc3dMap.apk"
+                                    href="/mobileapp/app-release.apk"
                                     download
                                     className="px-8 py-3 bg-green-600 text-white text-lg font-bold rounded shadow hover:bg-green-700 transition w-full sm:w-auto text-center"
                                 >

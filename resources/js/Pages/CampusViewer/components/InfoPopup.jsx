@@ -119,7 +119,11 @@ export default function InfoPopup({ popupInfo, onClose }) {
                                     {h.happenings || "No event details."}
 
                                     {h.picture && (
-                                        <ImageBox src={h.picture} alt="Event" />
+                                        <img
+                                            src={h.picture}
+                                            alt="Event"
+                                            className="your-css-class"
+                                        />
                                     )}
 
                                     {h.video && (

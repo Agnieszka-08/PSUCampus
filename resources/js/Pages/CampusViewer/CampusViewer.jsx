@@ -234,6 +234,10 @@ export default function CampusViewer() {
             setPopupInfo({
                 id: role,
                 name: allInfo.name || groupMeta?.name || role.toUpperCase(),
+                description:
+                    allInfo.description ||
+                    groupMeta?.decription ||
+                    role.toUpperCase(),
                 department: role.toUpperCase(),
 
                 // both combined
@@ -1024,7 +1028,8 @@ export default function CampusViewer() {
                                             displayName: formal,
                                             role: officeRole,
                                             floor:
-                                                officeFloors[officeRole] || null,
+                                                officeFloors[officeRole] ||
+                                                null,
                                             mesh: null,
                                         });
                                     }
